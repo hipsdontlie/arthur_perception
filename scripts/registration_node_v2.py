@@ -32,31 +32,29 @@ class Registration():
     
     def callback(self,data):
         self.acquired_pointcloud = False
-        print("inside callback")
-        print("save_pointcloud",rospy.get_param('save_pointcloud'))
-        print("testing",rospy.get_param('testing'))
+        # print("inside callback")
+        if rospy.get_param('save_pointcloud') == True: 
+            self.o3dpc = orh.rospc_to_o3dpc(data)
+            self.o3dpc_np = np.asarray(self.o3dpc.points) * 1000
+            self.o3dpc = o3d.geometry.PointCloud()
+            self.o3dpc.points = o3d.utility.Vector3dVector(self.o3dpc_np)
+            o3d.visualization.draw_geometries([self.o3dpc])
+            o3d.io.write_point_cloud("/home/mrsd-team-c/arthur_ws/src/arthur_perception/pointclouds/collected_pc.ply", self.o3dpc)
+            # self.pick_points(self.o3dpc)
+            self.acquired_pointcloud = True
+            # print(np.asarray(self.o3dpc.points))
+            self.chosen_point = self.manual_registration(self.o3dpc)
+            
+            # self.broadcast_tf_reaming_end_pt(self.chosen_point)
 
-        self.o3dpc = orh.rospc_to_o3dpc(data)
-        self.o3dpc_np = np.asarray(self.o3dpc.points) * 1000
-        self.o3dpc = o3d.geometry.PointCloud()
-        self.o3dpc.points = o3d.utility.Vector3dVector(self.o3dpc_np)
-        o3d.visualization.draw_geometries([self.o3dpc])
-        o3d.io.write_point_cloud("../pointclouds/collected_pc.ply", self.o3dpc)
-        # self.pick_points(self.o3dpc)
-        self.acquired_pointcloud = True
-        # print(np.asarray(self.o3dpc.points))
-        
-        
-        # self.broadcast_tf_reaming_end_pt(self.chosen_point)
+            self.end_point_publisher(self.chosen_point)
 
-        self.end_point_publisher(self.chosen_point)
-
-        print("Done publishing end point!")
-        rospy.set_param("save_pointcloud", False)
+            print("Done publishing end point!")
+            rospy.set_param("save_pointcloud", False)
 
     def listener(self):
         # rospy.init_node('listener', anonymous=True)
-        # rospy.set_param("save_pointcloud", False)
+        rospy.set_param("save_pointcloud", False)
         print("inside listener")
         rospy.Subscriber("pelvis_pointcloud", PointCloud2, self.callback)
         rospy.spin()
@@ -82,7 +80,7 @@ class Registration():
         
     def get_end_point(self,final_transformation):
         
-        source = o3d.io.read_point_cloud("../pointclouds/hip_1_stitched.ply")
+        source = o3d.io.read_point_cloud("/home/mrsd-team-c/arthur_ws/src/arthur_perception/pointclouds/hip_1_stitched.ply")
         picked_id_source = self.pick_points(source)
         chosen_point = np.asarray(source.points)[picked_id_source]
         chosen_point = np.insert(chosen_point,3,1)
@@ -96,10 +94,10 @@ class Registration():
         # print(np.asarray(target.points))
         
 
-        source = o3d.io.read_point_cloud("../pointclouds/hip_1_stitched.ply")
+        source = o3d.io.read_point_cloud("/home/mrsd-team-c/arthur_ws/src/arthur_perception/pointclouds/hip_1_stitched.ply")
         threshold = 1
         if(rospy.get_param('testing') == True):
-            target = o3d.io.read_point_cloud("../pointclouds/collected_pc.ply")
+            target = o3d.io.read_point_cloud("/home/mrsd-team-c/arthur_ws/src/arthur_perception/pointclouds/collected_pc.ply")
             target_s = copy.deepcopy(target)
 
         else: 
@@ -220,15 +218,8 @@ class Registration():
             #br.sendTransform((point[0][0]/1000, point[0][1]/1000, point[0][2]/1000),(0,0,0,1),rospy.Time.now(),"initial_reaming_end_point","camera")
 
             try:
-                # rospy.sleep(0.5)
-                
-                # # pelvis_to_camera_tf = listener.lookupTransform('pelvis', 'camera', rospy.Time(0))
-                pelvis_to_camera_tf = self.get_transformation('pelvis', 'camera')
-                # camera_to_reaming_pt = PointStamped()
+                pelvis_to_camera_tf = self.get_transformation('camera', 'pelvis')
                 camera_to_reaming_pt = Point(point[0][0]/1000, point[0][1]/1000, point[0][2]/1000)
-                # camera_to_reaming_pt.header.stamp = rospy.Time()
-                # camera_to_reaming_pt.header.frame_id = 'camera'
-
                 pelvis_to_reaming_end_point = self.transform_point(pelvis_to_camera_tf, camera_to_reaming_pt)
                 
                 br.sendTransform((pelvis_to_reaming_end_point.point.x, pelvis_to_reaming_end_point.point.y, pelvis_to_reaming_end_point.point.z),(0,0,0,1),rospy.Time.now(),"reaming_end_point","pelvis")

@@ -1,0 +1,15 @@
+<launch>
+
+<arg name="testing" default="True"/>
+
+<param name="testing" value="$(arg testing)"/>
+<param name="save_pointcloud" value="$(arg testing)"/>
+
+
+<group unless="$(arg testing)">
+<node pkg = "arthur_perception" type="pointcloudCollector" name="pointcloudCollector" output="screen" />
+</group>
+
+<node pkg = "arthur_perception" type="registration_node_v2.py" name="registration_node_v2" output="screen"/> 
+
+</launch>

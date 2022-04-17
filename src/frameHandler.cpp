@@ -12,7 +12,6 @@
 #include "geometry_msgs/PoseStamped.h"
 #include "std_msgs/Header.h"
 #include <eigen3/Eigen/Dense>
-
 #include <tf2_ros/transform_broadcaster.h>
 
 // Include libraries for camera

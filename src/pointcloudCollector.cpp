@@ -32,7 +32,7 @@
 using namespace std;
 
 // Pointcloud Collection Hyperparams
-int num_points = 100;
+int num_points = 3000;
 int points_added = 0;
 int time_elapsed = 2;
 ros::Time publish_time;
@@ -64,35 +64,44 @@ int collectPelvisPointcloud(ros::NodeHandle n){
     tf2_ros::TransformListener tfListener(tfBuffer);
     
     //int flag = -1;
-    while ( points_collected < num_points){
+    while (points_collected < num_points){
         
-        cout << "Collecting pointcloud!" << endl;
+        
         try{
-            ++ points_collected;
-            ros::Duration(0.5).sleep();
-            camera_probetip_transform = tfBuffer.lookupTransform("camera", "probetip", ros::Time(0));
-            cout << "Total Points Collected: "<< points_collected << endl;
+            if (tfBuffer.canTransform("camera", "probetip", ros::Time::now(), ros::Duration(3.0)) == true){
+                cout << "Collecting pointcloud!" << endl;
+                camera_probetip_transform = tfBuffer.lookupTransform("camera", "probetip", ros::Time(0));
+                ++ points_collected;
+                // ros::Duration(0.1).sleep();
+                cout << "Total Points Collected: "<< points_collected << endl;
 
-            *iter_x = camera_probetip_transform.transform.translation.x;
-            *iter_y = camera_probetip_transform.transform.translation.y;
-            *iter_z = camera_probetip_transform.transform.translation.z;
-        
-            ++iter_x;
-            ++iter_y;
-            ++iter_z;
+                *iter_x = camera_probetip_transform.transform.translation.x;
+                *iter_y = camera_probetip_transform.transform.translation.y;
+                *iter_z = camera_probetip_transform.transform.translation.z;
+            
+                ++iter_x;
+                ++iter_y;
+                ++iter_z;
 
-            pelvis_cloud.header.frame_id = "camera";
-            pelvis_cloud.header.stamp = ros::Time::now();
-            pelvis_cloud.height = 1;
-            pelvis_cloud.width = num_points;
-            pelvis_cloud.is_dense = false;
+                pelvis_cloud.header.frame_id = "camera";
+                pelvis_cloud.header.stamp = ros::Time::now();
+                pelvis_cloud.height = 1;
+                pelvis_cloud.width = num_points;
+                pelvis_cloud.is_dense = false;
 
-            pelvis_pointcloud_publisher.publish(pelvis_cloud);
+                pelvis_pointcloud_publisher.publish(pelvis_cloud);
 
+            }
+
+            else {ROS_INFO("Probe not Visible!");}
+
+
+     
             }
         
 
         catch (tf2::TransformException &ex) {
+
             ROS_WARN("%s",ex.what());
             ros::Duration(1.0).sleep();
         }

@@ -1,6 +1,6 @@
 <launch>
 
-<arg name="testing" default="True"/>
+<arg name="testing" default="False"/>
 
 <param name="testing" value="$(arg testing)"/>
 <param name="save_pointcloud" value="$(arg testing)"/>

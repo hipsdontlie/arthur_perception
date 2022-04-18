@@ -11,9 +11,13 @@ import copy
 import tf2_geometry_msgs
 import tf2_ros
 
-class Registration():
+
+
+class Registration:
     
-    
+    def __init__(self, voxel_size):  
+        self.voxel_size = voxel_size  
+
     def pick_points(self,pcd):
         print("")
         print(
@@ -65,7 +69,7 @@ class Registration():
         source_temp.paint_uniform_color([1, 0.706, 0])
         target_temp.paint_uniform_color([0, 0.651, 0.929])
         source_transformed = source_temp.transform(transformation)
-        o3d.visualization.draw_geometries([source_temp, target_temp])    
+        o3d.visualization.draw_geometries([source_transformed, target_temp])    
 
     def draw_registration_result_final(self,source, target, transformation):
         source_temp = copy.deepcopy(source)
@@ -91,6 +95,50 @@ class Registration():
         return self.point_to_pose(transformed_point)
 
 
+    def preprocess_point_cloud(self, pcd, voxel_size):
+        print(":: Downsample with a voxel size %.3f." % self.voxel_size)
+        pcd_down = pcd.voxel_down_sample(self.voxel_size)
+
+        radius_normal = self.voxel_size * 2
+        print(":: Estimate normal with search radius %.3f." % radius_normal)
+        pcd_down.estimate_normals(
+            o3d.geometry.KDTreeSearchParamHybrid(radius=radius_normal, max_nn=30))
+
+        radius_feature = self.voxel_size * 5
+        print(":: Compute FPFH feature with search radius %.3f." % radius_feature)
+        pcd_fpfh = o3d.registration.compute_fpfh_feature(
+            pcd_down,
+            o3d.geometry.KDTreeSearchParamHybrid(radius=radius_feature, max_nn=100))
+        return pcd_down, pcd_fpfh
+
+    def refine_registration(self, source, target, source_fpfh, target_fpfh,reg_p2p):
+        distance_threshold = self.voxel_size * 0.4
+        print(":: Point-to-plane ICP registration is applied on original point")
+        print("   clouds to refine the alignment. This time we use a strict")
+        print("   distance threshold %.3f." % distance_threshold)
+        result = o3d.registration.registration_icp(
+            source, target, distance_threshold, reg_p2p.transformation,
+            o3d.registration.TransformationEstimationPointToPlane())
+        return result
+
+    #global registration 
+    def execute_global_registration(self,source_down, target_down, source_fpfh,
+                                target_fpfh, voxel_size):
+        distance_threshold = self.voxel_size * 1.5
+        print(":: RANSAC registration on downsampled point clouds.")
+        print("   Since the downsampling voxel size is %.3f," % self.voxel_size)
+        print("   we use a liberal distance threshold %.3f." % distance_threshold)
+        result = o3d.pipelines.registration.registration_ransac_based_on_feature_matching(
+            source_down, target_down, source_fpfh, target_fpfh, True,
+            distance_threshold,
+            o3d.pipelines.registration.TransformationEstimationPointToPoint(False),
+            3, [
+                o3d.pipelines.registration.CorrespondenceCheckerBasedOnEdgeLength(
+                    0.9),
+                o3d.pipelines.registration.CorrespondenceCheckerBasedOnDistance(
+                    distance_threshold)
+            ], o3d.pipelines.registration.RANSACConvergenceCriteria(100000, 0.999))
+        return result
         
     def manual_registration(self, target=None):
         # print(np.asarray(target.points))
@@ -131,11 +179,27 @@ class Registration():
             source, target_s, threshold, trans_init,
             o3d.registration.TransformationEstimationPointToPoint())
 
-        #choose reaming end-point
-        self.chosen_point = self.draw_registration_result_final(source, target_s, reg_p2p.transformation)
-        print("Transforamtion is : ",reg_p2p.transformation)
+    
+
+        #downsample points and extract FPFH features 
+        source_down, source_fpfh = self.preprocess_point_cloud(source, self.voxel_size)
+        target_down, target_fpfh = self.preprocess_point_cloud(target_s, self.voxel_size)
+
+        result_ransac = self.execute_global_registration(source_down, target_down,
+                                            source_fpfh, target_fpfh,
+                                            self.voxel_size)
+        #visualize result after global registration 
+        self.draw_registration_result(source_down, target_down, result_ransac.transformation)
+
+        #refine registration and visualize 
+        result = self.refine_registration(source_down, target_down, source_fpfh, target_fpfh, reg_p2p) #result_ransac)
+        self.draw_registration_result(source, target_s, result.transformation)
         
-        evaluation = o3d.registration.evaluate_registration(source, target_s, threshold, reg_p2p.transformation)
+        #choose reaming end-point
+        self.chosen_point = self.draw_registration_result_final(source, target_s, result.transformation)
+        print("Transforamtion is : ",result.transformation)
+        
+        evaluation = o3d.registration.evaluate_registration(source, target_s, threshold, result.transformation)
         print("Evaluation: ", evaluation)
         
         return self.chosen_point
@@ -230,7 +294,7 @@ class Registration():
                     first_point = False
                 # (pelvis_camera_trans, pelvis_camera_rot) = listener.lookupTransform('camera', 'pelvis', rospy.Time(0))
                 print("Updated pelvis to camera TF!")
-                br.sendTransform((pelvis_to_reaming_end_point.point.x, pelvis_to_reaming_end_point.point.y, pelvis_to_reaming_end_point.point.z),(0.878, 0.036, -0.470, 0.085),rospy.Time.now(),"reaming_end_point","pelvis")
+                br.sendTransform((pelvis_to_reaming_end_point.point.x, pelvis_to_reaming_end_point.point.y, pelvis_to_reaming_end_point.point.z),(0.440, 0.762, -0.339, -0.332),rospy.Time.now(),"reaming_end_point","pelvis")
                 print("Sent Pelvis to Reaming end-point transformation")
                 (trans,rot) = listener.lookupTransform('base_link', 'reaming_end_point', rospy.Time(0))
 
@@ -256,7 +320,7 @@ class Registration():
 
 rospy.init_node('registration_node_v2', anonymous=True)
 print("Started registration node")
-reg = Registration()
+reg = Registration(voxel_size = 0.1)
 if(rospy.get_param('testing')==False):
     reg.listener()
 else:

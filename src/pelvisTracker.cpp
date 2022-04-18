@@ -15,6 +15,8 @@
 #include <tf/LinearMath/Matrix3x3.h>
 #include <eigen3/Eigen/Dense>
 
+bool DEBUG = true;
+
 using namespace std;
 
 float calculatePositionError(geometry_msgs::Point initialPosition
@@ -27,18 +29,21 @@ float calculatePositionError(geometry_msgs::Point initialPosition
     return positionError;
 }
 
-Eigen::Vector3f convertToRPY(Eigen::Quaternionf quat){
-    Eigen::Vector3f rpy;
-    double roll, pitch, yaw;
-    rpy = Eigen::Matrix3f(quat).eulerAngles(0,1,2);
-    return rpy;
+tf::Matrix3x3 convertToRotation(tf::Quaternion quat){
+    tf::Matrix3x3 rot;
+
+    rot = tf::Matrix3x3(quat);
+
+    return rot;
 }
 
-Eigen::Vector3f calculateRPYError(Eigen::Vector3f initialOrientation, Eigen::Vector3f currentOrientation){
+vector<double> calculateRotError(tf::Matrix3x3 initialOrientation, tf::Matrix3x3 currentOrientation){
 
-    Eigen::Vector3f rpyError = (180*(initialOrientation - currentOrientation))/3.14;
+    vector<double> err(3);
+    tf::Matrix3x3 rotError = currentOrientation * initialOrientation.inverse();
+    rotError.getRPY(err[0], err[1], err[2]);
      
-    return rpyError;
+    return err;
 }
 
 
@@ -52,31 +57,39 @@ void detectError(const geometry_msgs::PoseStampedConstPtr& currentPelvisPose
     float positionError = calculatePositionError( initialPose.pose.position
                                                 , currentPelvisPose->pose.position);
 
-    Eigen::Quaternionf initialPoseQuat(initialPose.pose.orientation.x,
+    tf::Quaternion initialPoseQuat(initialPose.pose.orientation.x,
                                        initialPose.pose.orientation.y,
                                        initialPose.pose.orientation.z,
                                        initialPose.pose.orientation.w);
 
-    Eigen::Quaternionf currentPoseQuat(currentPelvisPose->pose.orientation.x,
+    tf::Quaternion currentPoseQuat(currentPelvisPose->pose.orientation.x,
                                        currentPelvisPose->pose.orientation.y,
                                        currentPelvisPose->pose.orientation.z,
                                        currentPelvisPose->pose.orientation.w);
 
-    Eigen::Vector3f initialOrientationRPY = convertToRPY(initialPoseQuat);
-    Eigen::Vector3f currentOrientationRPY = convertToRPY(currentPoseQuat);
-    Eigen::Vector3f orientationErrorInDegrees = calculateRPYError(initialOrientationRPY
+    tf::Matrix3x3 initialOrientationRPY = convertToRotation(initialPoseQuat);
+    tf::Matrix3x3 currentOrientationRPY = convertToRotation(currentPoseQuat);
+    vector<double> orientationErrorInDegrees = calculateRotError(initialOrientationRPY
                                                 ,currentOrientationRPY);
 
-    std_msgs::Bool error;
-    if(positionError >= 0.003 or orientationErrorInDegrees[0] >= 3 or orientationErrorInDegrees[1] >= 3 or orientationErrorInDegrees[2] >= 3){
-        // if(positionError >= 0.003)
-        //     cout << "Pelvis : positionError : " << positionError << " "; 
-        // else{
-        //     cout << "Pelvis : RPYError : " << orientationErrorInDegrees[0] << " " 
-        //                                     << orientationErrorInDegrees[1] << " "
-        //                                     << orientationErrorInDegrees[2] << " " <<endl; 
-        // }
+    if(DEBUG){
+    cout << "Pelvis : positionError : " << positionError << " "; 
+        cout << "Pelvis : RPYError : " << orientationErrorInDegrees[0] << " " 
+                                                << orientationErrorInDegrees[1] << " "
+                                                << orientationErrorInDegrees[2] << " " <<endl; 
+    }
 
+    std_msgs::Bool error;
+    if(positionError >= 0.003 or orientationErrorInDegrees[0] >= 0.0523599 or orientationErrorInDegrees[1] >= 0.0523599 or orientationErrorInDegrees[2] >= 0.0523599){
+        cout << "Error Detected!\n";
+        if(positionError >= 0.003){
+            // cout << "Pelvis : positionError : " << positionError << " "; 
+        }
+        else{
+            // cout << "Pelvis : RPYError : " << orientationErrorInDegrees[0] << " " 
+                                            // << orientationErrorInDegrees[1] << " "
+                                            // << orientationErrorInDegrees[2] << " " <<endl; 
+        }
         error.data = true;
         error_publisher->publish(error);
         initialPose = *currentPelvisPose;

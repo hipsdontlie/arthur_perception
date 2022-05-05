@@ -1,3 +1,16 @@
+<!-- 
+File Name: regisrtation.launch
+
+Team Name: Team 4, Hipster 
+
+Author(s): Kaushik Balasundar 
+
+Team Members: Kaushik Balasundar, Anthony Kyu, Gunjan Sethi, Sundaram Seivur, Parker Hill
+
+High Level Description: Starts the camera and runs the pelvis tracker to detect errors
+
+Date of first revision: 28th Aoril 2022 -->
+
 <launch>
 
 <node pkg = "arthur_perception" type="frameHandler" name="frameHandler" launch-prefix="sudo -S" output="screen" />

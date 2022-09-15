@@ -1,3 +1,6 @@
+# Author(s): Gunjan Sethi
+# Usage doc: https://hipsdontlie.atlassian.net/wiki/spaces/~97717424/pages/35717130/STL+PCD+Converter+Usage
+
 import open3d as o3d
 import argparse
 from pathlib import Path

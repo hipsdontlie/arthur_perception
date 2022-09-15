@@ -294,7 +294,7 @@ class Registration:
                     first_point = False
                 # (pelvis_camera_trans, pelvis_camera_rot) = listener.lookupTransform('camera', 'pelvis', rospy.Time(0))
                 print("Updated pelvis to camera TF!")
-                br.sendTransform((pelvis_to_reaming_end_point.point.x, pelvis_to_reaming_end_point.point.y, pelvis_to_reaming_end_point.point.z),(0.440, 0.762, -0.339, -0.332),rospy.Time.now(),"reaming_end_point","pelvis")
+                br.sendTransform((pelvis_to_reaming_end_point.point.x, pelvis_to_reaming_end_point.point.y, pelvis_to_reaming_end_point.point.z),(0.825, 0.411, -0.375, -0.101),rospy.Time.now(),"reaming_end_point","pelvis")
                 print("Sent Pelvis to Reaming end-point transformation")
                 (trans,rot) = listener.lookupTransform('base_link', 'reaming_end_point', rospy.Time(0))
 

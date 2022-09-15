@@ -32,7 +32,7 @@
 using namespace std;
 
 // Pointcloud Collection Hyperparams
-int num_points = 3000;
+int num_points = 500;
 int points_added = 0;
 int time_elapsed = 2;
 ros::Time publish_time;

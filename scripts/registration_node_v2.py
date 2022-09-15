@@ -229,10 +229,12 @@ class Registration():
                     pelvis_to_reaming_end_point = self.transform_point(initial_pelvis_to_camera_tf, camera_to_reaming_pt)
                     first_point = False
                 # (pelvis_camera_trans, pelvis_camera_rot) = listener.lookupTransform('camera', 'pelvis', rospy.Time(0))
-                print("Updated pelvis to camera TF!") # 0.881, 0.064, -0.457, 0.103
-                br.sendTransform((pelvis_to_reaming_end_point.point.x, pelvis_to_reaming_end_point.point.y, pelvis_to_reaming_end_point.point.z),(0.737, 0.434, -0.491, -0.165),rospy.Time.now(),"initial_reaming_end_point","pelvis")
-                br.sendTransform((0,0,0.005),(0,0,0,1),rospy.Time.now(),"reaming_end_point","initial_reaming_end_point")
+                print("Updated pelvis to camera TF!") # 0.881, 0.064, -0.457, 0.103 #0.737, 0.434, -0.491, -0.165 || 0.710, 0.489, -0.445, -0.243 # 
 
+                #To get the orientation: align the robot arm to the desired orientation and then run: rosrun tf tf_echo pelvis tool_tip_frame
+
+                br.sendTransform((pelvis_to_reaming_end_point.point.x, pelvis_to_reaming_end_point.point.y, pelvis_to_reaming_end_point.point.z),(0.848, 0.409, -0.332, -0.057),rospy.Time.now(),"initial_reaming_end_point","pelvis")
+                br.sendTransform((0,0,0.01),(0,0,0,1),rospy.Time.now(),"reaming_end_point","initial_reaming_end_point")
                 print("Sent Pelvis to Reaming end-point transformation")
                 (trans,rot) = listener.lookupTransform('base_link', 'reaming_end_point', rospy.Time(0))
 

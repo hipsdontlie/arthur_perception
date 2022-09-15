@@ -1,3 +1,18 @@
+'''
+Class Name: Reigsrtation
+
+Team Name: Team 4, Hipster 
+
+Author(s): Kaushik Balasundar 
+
+Team Members: Kaushik Balasundar, Anthony Kyu, Gunjan Sethi, Sundaram Seivur, Parker Hill
+
+High Level Description: 
+- Code that performs registration given a source and target pointclouds
+- Sends the end-point for reaming with a hard-coded orientation through a topic 
+
+Date of first revision: 10th February 2022
+'''
 #!/usr/bin/env python3
 from tracemalloc import get_traceback_limit
 import open3d as o3d
@@ -13,7 +28,7 @@ import tf2_ros
 
 class Registration():
     
-    
+    #Function to pick correpondences in a pointcloud
     def pick_points(self,pcd):
         print("")
         print(
@@ -29,7 +44,7 @@ class Registration():
         print("")
         return vis.get_picked_points()
 
-    
+    #Callback for end-point publisher   
     def callback(self,data):
         self.acquired_pointcloud = False
         # print("inside callback")
@@ -52,12 +67,15 @@ class Registration():
             print("Done publishing end point!")
             rospy.set_param("save_pointcloud", False)
 
+    #Subscriber for the pelvis pointcloud
     def listener(self):
         # rospy.init_node('listener', anonymous=True)
         rospy.set_param("save_pointcloud", False)
         print("inside listener")
         rospy.Subscriber("pelvis_pointcloud", PointCloud2, self.callback)
         rospy.spin()
+        
+    #Visualizes the registration result     
 
     def draw_registration_result(self, source, target, transformation):
         source_temp = copy.deepcopy(source)
@@ -67,6 +85,7 @@ class Registration():
         source_transformed = source_temp.transform(transformation)
         o3d.visualization.draw_geometries([source_temp, target_temp])    
 
+    #Visualizes registration result and allows the choosing of the reaming end-point
     def draw_registration_result_final(self,source, target, transformation):
         source_temp = copy.deepcopy(source)
         target_temp = copy.deepcopy(target)
@@ -77,21 +96,8 @@ class Registration():
         picked_id_source = self.pick_points(source_transformed)
         self.chosen_point = np.asarray(source_transformed.points)[picked_id_source]
         return self.chosen_point
-        
-    def get_end_point(self,final_transformation):
-        
-        source = o3d.io.read_point_cloud("/home/mrsd-team-c/arthur_ws/src/arthur_perception/pointclouds/hip_1_stitched.ply")
-        picked_id_source = self.pick_points(source)
-        chosen_point = np.asarray(source.points)[picked_id_source]
-        chosen_point = np.insert(chosen_point,3,1)
-        print("chosen point", chosen_point)
-        print("Transformation: ", final_transformation )
-        transformed_point = np.matmul(final_transformation, chosen_point)
-        print("transformed_point", transformed_point)
-        return self.point_to_pose(transformed_point)
-
-
-        
+    
+    #Manual registration by choosing correpondences          
     def manual_registration(self, target=None):
         # print(np.asarray(target.points))
         
@@ -140,25 +146,7 @@ class Registration():
         
         return self.chosen_point
 
-
-    def point_to_pose(self,point):
-        
-        pose_msg = PoseStamped()
-        print("Shape of point is", point.shape)
-        print("Point coordinates are: ", point)
-        pose_msg.header.frame_id = "camera"
-        pose_msg.header.stamp = rospy.Time()
-        pose_msg.pose.position.x = point[0][0]/1000
-        pose_msg.pose.position.y = point[0][1]/1000
-        pose_msg.pose.position.z = point[0][2]/1000
-
-        pose_msg.pose.orientation.x = 0
-        pose_msg.pose.orientation.y = 0
-        pose_msg.pose.orientation.z = 0
-        pose_msg.pose.orientation.w = 1
-        return pose_msg
-
-                
+    #utility function to convert a transformation matrix to pose 
             
     def convert_to_pose(self,final_transformation):
         
@@ -177,7 +165,7 @@ class Registration():
             
         return pose_msg
 
-
+    #testing utility 
     def testing_registration(self):
 
         print("inside testing registration")
@@ -186,6 +174,7 @@ class Registration():
         self.acquired_pointcloud = True
         self.end_point_publisher(self.chosen_point) 
 
+    #TF-listetner to get the transformation  between source and target frames 
     def get_transformation(self, source_frame, target_frame,
                        tf_cache_duration=2.0):
         tf_buffer = tf2_ros.Buffer(rospy.Duration(tf_cache_duration))
@@ -200,7 +189,8 @@ class Registration():
             rospy.logerr('Unable to find the transformation from %s to %s'
                         % source_frame, target_frame)
         return transformation
-
+    
+    #Transform to a different frame 
     def transform_point(self,transformation, point_wrt_source,target_frame='pelvis'):
         point_wrt_target = \
             tf2_geometry_msgs.do_transform_point(PointStamped(point=point_wrt_source),
@@ -209,7 +199,7 @@ class Registration():
         point_wrt_target.header.frame_id=target_frame
         return point_wrt_target
 
-        
+    #Get the end point and publish it
     def end_point_publisher(self,point):
         br = tf.TransformBroadcaster()
         first_point = True
@@ -257,6 +247,8 @@ class Registration():
 
             pub.publish(pose_msg)
             rate.sleep()
+
+#Main function 
 
 rospy.init_node('registration_node_v2', anonymous=True)
 print("Started registration node")

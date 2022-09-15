@@ -1,11 +1,17 @@
 /*
- * Pointcloud Collector
+ * Class Name: pointcloudCollector
  *
- * Hipster (c) 2022-2023
- * author: Gunjan Sethi, gunjans@andrew.cmu.edu
- *         Kaushik Balasundar, kaushik@cmu.edu
- *     
+ * Team Name: Hipster (c) 2022-2023
+ * Author(s): Gunjan Sethi, gunjans@andrew.cmu.edu
+ *         Kaushik Balasundar, kaushikb@cmu.edu
+ * 
+ * Team Members: Kaushik Balasundar, Anthony Kyu, Gunjan Sethi, Sundaram Seivur, Parker Hill
+ * 
+ * High Level Description: Collects an arbitrary number of points from the registration probe, converts to PointCloud2 type and publishes as a topic    
+ * 
+ * Date of first revision: 17th March 2022      
  */
+
 
 // Include libraries for ROS
 #include "ros/ros.h"
@@ -38,6 +44,8 @@ int time_elapsed = 2;
 ros::Time publish_time;
 
 static volatile bool keep_going = true;
+
+// Create publisher for pointcloud, populate message with points from marker 
 
 int collectPelvisPointcloud(ros::NodeHandle n){
 
@@ -112,6 +120,9 @@ int collectPelvisPointcloud(ros::NodeHandle n){
 
     return points_collected;
 }
+
+
+//main function 
 
 int main(int argc, char **argv){
     

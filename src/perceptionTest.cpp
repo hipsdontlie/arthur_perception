@@ -1,10 +1,14 @@
 /*
- * Perception Test for SVD
+ * Class Name: PercpetionTest 
  *
- * Hipster (c) 2022-2023
- * author: Gunjan Sethi, gunjans@andrew.cmu.edu
- *         Kaushik Balasundar, kaushik@cmu.edu
- *     
+ * Team Name: Hipster (c) 2022-2023
+ * Author(s): Gunjan Sethi, gunjans@andrew.cmu.edu
+ *         Kaushik Balasundar, kaushikb@cmu.edu
+ * 
+ * Team Members: Kaushik Balasundar, Anthony Kyu, Gunjan Sethi, Sundaram Seivur, Parker Hill
+ * High Level Description: Error detection accuracy test for SVD
+
+ * Date of first revision: 7th April 2022  
  */
 
 // Include libraries for ROS
@@ -14,6 +18,8 @@
 #include <chrono>
 
 using namespace std;
+
+//Calculate position error 
 
 float calculatePositionError(geometry_msgs::Point initialPosition
                             ,geometry_msgs::Point currentPosition){
@@ -25,6 +31,8 @@ float calculatePositionError(geometry_msgs::Point initialPosition
     return positionError;
 }
 
+//Convert quaternion to Euler angles
+
 Eigen::Vector3f convertToRPY(Eigen::Quaternionf quat){
     Eigen::Vector3f rpy;
     double roll, pitch, yaw;
@@ -32,6 +40,7 @@ Eigen::Vector3f convertToRPY(Eigen::Quaternionf quat){
     return rpy;
 }
 
+// compute error in RPY
 Eigen::Vector3f calculateRPYError(Eigen::Vector3f initialOrientation, Eigen::Vector3f currentOrientation){
 
     Eigen::Vector3f rpyError = (180*(initialOrientation - currentOrientation))/3.14;
@@ -39,6 +48,8 @@ Eigen::Vector3f calculateRPYError(Eigen::Vector3f initialOrientation, Eigen::Vec
     return rpyError;
 }
 
+
+//get reference marker 1 pose 
 
 void getMarkerPose1(const geometry_msgs::PoseStampedConstPtr& marker1Pose
                     , geometry_msgs::PoseStamped* marker1_pose){
@@ -48,6 +59,8 @@ void getMarkerPose1(const geometry_msgs::PoseStampedConstPtr& marker1Pose
                 
 }
 
+// get reference marker 2 pose 
+
 void getMarkerPose2(const geometry_msgs::PoseStampedConstPtr& marker2Pose
                     , geometry_msgs::PoseStamped* marker2_pose){
 
@@ -56,6 +69,7 @@ void getMarkerPose2(const geometry_msgs::PoseStampedConstPtr& marker2Pose
 
 }        
 
+//main function 
 int main(int argc, char **argv){
     
     ros::init(argc, argv, "perceptionTest");

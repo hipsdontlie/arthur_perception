@@ -1,11 +1,18 @@
 /*
- * Pelvis Tracker
+ * Class Name: Pelvis Tracker
  *
- * Hipster (c) 2022-2023
- * author: Gunjan Sethi, gunjans@andrew.cmu.edu
- *         Kaushik Balasundar, kaushik@cmu.edu
- *     
+ * Team Name: Hipster (c) 2022-2023
+ * Authors: Gunjan Sethi, gunjans@andrew.cmu.edu
+ *         Kaushik Balasundar, kaushikb@cmu.edu
+
+ * Team Members: Kaushik Balasundar, Anthony Kyu, Gunjan Sethi, Sundaram Seivur, Parker Hill
+
+* High Level Description: 
+    Tracks pelvis pose and publishes error compared to initial pose 
+
+Date of first revision: 1st February 2022    
  */
+
 #include "ros/ros.h"
 #include "std_msgs/Header.h"
 #include "std_msgs/Float64MultiArray.h"

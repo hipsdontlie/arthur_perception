@@ -1,10 +1,15 @@
 /*
- * Frame Handler
+ * Class Name: Frame Handler
  *
- * Hipster (c) 2022-2023
- * author: Gunjan Sethi, gunjans@andrew.cmu.edu
- *         Kaushik Balasundar, kaushik@cmu.edu
- *     
+ * Team Name: Hipster (c) 2022-2023
+ * Author(s): Gunjan Sethi, gunjans@andrew.cmu.edu
+ *            Kaushik Balasundar, kaushikb@cmu.edu
+ * Team Members: Kaushik Balasundar, Anthony Kyu, Gunjan Sethi, Sundaram Seivur, Parker Hill
+
+* High Level Description: 
+    Reads marker data from Atracsys SDK and publishes the poses as ROS message types 
+
+Date of first revision: 1st February 2022    
  */
 
 // Include libraries for ROS

@@ -150,7 +150,8 @@ int publishPoses(ftkMarker* marker
 
     if(body == "Registration Probe"){
 
-        geometry_msgs::TransformStamped probetip_transform; 
+        geometry_msgs::TransformStamped probetip_transform;
+
 
         // ros::Time stamp = ros::Time::now(); 
         probetip_transform.header.stamp = stamp;
@@ -167,6 +168,7 @@ int publishPoses(ftkMarker* marker
         probetip_transform.transform.rotation.w = 1;
 
         br.sendTransform(probetip_transform);
+
 
     }
 
@@ -189,11 +191,14 @@ int main(int argc, char **argv)
      ros::Publisher probe_pose_publisher = n.advertise<geometry_msgs::PoseStamped>("probe_pose", 1000);
      ros::Publisher pelvis_pose_publisher = n.advertise<geometry_msgs::PoseStamped>("pelvis_pose", 1000);
      ros::Publisher end_effector_pose_publisher = n.advertise<geometry_msgs::PoseStamped>("end_effector_pose", 1000);
+     ros::Publisher probe_tip_pose_publisher = n.advertise<geometry_msgs::PoseStamped>("probe_tip_pose", 1000);
+     
      
     //  Broadcasters
      tf2_ros::TransformBroadcaster probe_tranform_broadcaster;
      tf2_ros::TransformBroadcaster pelvis_tranform_broadcaster;
      tf2_ros::TransformBroadcaster end_effector_tranform_broadcaster;
+     tf2_ros::TransformBroadcaster probe_tip_tranform_broadcaster;
 
     struct markerInfo probe_marker = {
         "/home/mrsd-team-c/arthur_ws/src/arthur_perception/data/geometry8888.ini",
@@ -204,6 +209,7 @@ int main(int argc, char **argv)
         probe_tranform_broadcaster,
         "probe_pose"
         };
+
 
     struct markerInfo pelvis_marker = {
         "/home/mrsd-team-c/arthur_ws/src/arthur_perception/data/geometry9990.ini",
@@ -216,8 +222,19 @@ int main(int argc, char **argv)
     };
 
 
+    struct markerInfo probe_tip_marker = {
+        "/home/mrsd-team-c/arthur_ws/src/arthur_perception/data/geometry8888.ini",
+        "Probe Tip",
+        "probetip",
+        "camera",
+        probe_tip_pose_publisher,
+        probe_tip_tranform_broadcaster,
+        "probe_tip_pose"
+    };
+
+
     struct markerInfo ee_marker = {
-        "/home/mrsd-team-c/arthur_ws/src/arthur_perception/data/geometry666600.ini",
+        "/home/mrsd-team-c/arthur_ws/src/arthur_perception/data/geometry24090.ini",
         "End Effector Marker",
         "ee_marker",
         "camera",
@@ -229,7 +246,11 @@ int main(int argc, char **argv)
 
     markerMap.insert(std::pair<int, markerInfo>(8888, probe_marker));
     markerMap.insert(std::pair<int, markerInfo>(9990, pelvis_marker));
-    markerMap.insert(std::pair<int, markerInfo>(666600, ee_marker));
+    markerMap.insert(std::pair<int, markerInfo>(24090, ee_marker));
+    markerMap.insert(std::pair<int, markerInfo>(1264, probe_tip_marker));
+
+
+
 
     if(TEST_MODE){
         ros::Publisher test_marker1_publisher = n.advertise<geometry_msgs::PoseStamped>("test_marker1_pose", 1000);
@@ -302,7 +323,7 @@ int main(int argc, char **argv)
     deque< string > geomFiles{ 
         markerMap[8888].geomFilePath,
         markerMap[9990].geomFilePath,
-        markerMap[666600].geomFilePath
+        markerMap[24090].geomFilePath
         // markerMap[9876].geomFilePath,
         // markerMap[9875].geomFilePath
     };

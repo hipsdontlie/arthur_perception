@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 '''
 Class Name: Reigsrtation
 
@@ -13,8 +14,7 @@ High Level Description:
 
 Date of first revision: 10th February 2022
 '''
-#!/usr/bin/env python3
-from tracemalloc import get_traceback_limit
+
 import open3d as o3d
 from open3d_ros_helper import open3d_ros_helper as orh
 import rospy
@@ -25,6 +25,7 @@ import tf
 import copy
 import tf2_geometry_msgs
 import tf2_ros
+from std_msgs.msg import Float64
 
 class Registration():
     
@@ -132,7 +133,7 @@ class Registration():
 
         # point-to-point ICP for refinement
         print("Perform point-to-point ICP refinement")
-        threshold = 0.5 #0.1  # 3cm distance threshold
+        threshold = 0.1 #0.1  # 3cm distance threshold
         reg_p2p = o3d.registration.registration_icp(
             source, target_s, threshold, trans_init,
             o3d.registration.TransformationEstimationPointToPoint())
@@ -142,6 +143,8 @@ class Registration():
         print("Transforamtion is : ",reg_p2p.transformation)
         
         evaluation = o3d.registration.evaluate_registration(source, target_s, threshold, reg_p2p.transformation)
+        rmse = evaluation.inlier_rmse
+        pub.publish(rmse)
         print("Evaluation: ", evaluation)
         
         return self.chosen_point
@@ -251,6 +254,7 @@ class Registration():
 #Main function 
 
 rospy.init_node('registration_node_v2', anonymous=True)
+pub = rospy.Publisher('percep_rmse', Float64, queue_size=10)
 print("Started registration node")
 reg = Registration()
 if(rospy.get_param('testing')==False):

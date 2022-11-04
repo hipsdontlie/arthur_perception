@@ -52,7 +52,7 @@ void collectPelvisPointcloud(ros::NodeHandle &n, ros::Publisher &pelvis_pointclo
     signal (SIGINT, [](int) {keep_going = false;});
 
     static int points_collected = 0;
-    bool rec = false;
+    int rec = 1;
     n.getParam("/collect_pointcloud", rec);
    
     sensor_msgs::PointCloud2 pelvis_cloud;
@@ -68,17 +68,37 @@ void collectPelvisPointcloud(ros::NodeHandle &n, ros::Publisher &pelvis_pointclo
     sensor_msgs::PointCloud2Iterator<float> iter_y(pelvis_cloud, "y");
     sensor_msgs::PointCloud2Iterator<float> iter_z(pelvis_cloud, "z");
 
+
     geometry_msgs::TransformStamped camera_probetip_transform;
     tf2_ros::Buffer tfBuffer;
     tf2_ros::TransformListener tfListener(tfBuffer);
     
     //int flag = -1;
     
-    n.getParam("/collect_pointcloud", rec);
-    while (n.getParam("/collect_pointcloud", rec) && (rec)){
+    // n.getParam("/collect_pointcloud", rec);
+    while (n.getParam("/collect_pointcloud", rec) && (rec != 0)){
+
+              
         try{
             if (tfBuffer.canTransform("camera", "probetip", ros::Time::now(), ros::Duration(3.0)) == true){
                 cout << "Collecting pointcloud!" << endl;
+                
+                    if(rec == 2){
+                    sensor_msgs::PointCloud2 pelvis_cloud;
+                    sensor_msgs::PointCloud2Modifier modifier(pelvis_cloud);
+                    
+                    modifier.resize(num_points);
+                    modifier.setPointCloud2Fields(
+                        3, "x", 1, sensor_msgs::PointField::FLOAT32, "y", 1,
+                        sensor_msgs::PointField::FLOAT32, "z", 1,
+                        sensor_msgs::PointField::FLOAT32);
+
+                    sensor_msgs::PointCloud2Iterator<float> iter_x(pelvis_cloud, "x");
+                    sensor_msgs::PointCloud2Iterator<float> iter_y(pelvis_cloud, "y");
+                    sensor_msgs::PointCloud2Iterator<float> iter_z(pelvis_cloud, "z");
+                }
+                
+                
                 camera_probetip_transform = tfBuffer.lookupTransform("camera", "probetip", ros::Time(0));
                 ++ points_collected;
                 // ros::Duration(0.1).sleep();
@@ -104,6 +124,8 @@ void collectPelvisPointcloud(ros::NodeHandle &n, ros::Publisher &pelvis_pointclo
 
             else {ROS_INFO("Probe not Visible!");}
 
+
+     
             }
         
 
@@ -128,13 +150,13 @@ int main(int argc, char **argv){
     ros::init(argc, argv, "pointcloudCollector");
     ros::NodeHandle n;
     ros::Rate loop_rate(60);
-    bool received;
+    int received = 0;
     ros::Publisher pelvis_pointcloud_publisher = n.advertise<sensor_msgs::PointCloud2>("pelvis_pointcloud", 1000);
 
      while(ros::ok()){
         if(n.getParam("/collect_pointcloud", received)){
             
-            if(received)
+            if(received!=0)
             {
                 std::cout << "Here" << std::endl;
                 collectPelvisPointcloud(n,pelvis_pointcloud_publisher);

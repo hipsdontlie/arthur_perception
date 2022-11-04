@@ -13,8 +13,12 @@ Date of first revision: 28th Aoril 2022 -->
 
 <launch>
 
+<!-- This param is used by UI to start and stop pointcloud collection -->
+<param name="/collect_pointcloud" type="bool" value="false" /> 
+
 <node pkg = "arthur_perception" type="frameHandler" name="frameHandler" launch-prefix="sudo -S" output="screen" />
-<node pkg = "arthur_perception" type="pelvisTracker" name="pelvisTracker" output="screen" />
+<node pkg = "arthur_perception" type="pelvisTracker" name="pelvisTracker" output="screen"/>
+<!-- <node pkg = "arthur_perception" type="pointcloudCollector" name="pointcloudCollector" output="screen" /> -->
 
 <!-- <node pkg="rviz" type="rviz" name="rviz" args="-d $(find arthur_perception)/rviz/config.rviz" /> -->
 </launch>

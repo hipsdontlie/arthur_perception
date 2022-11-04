@@ -24,6 +24,6 @@ Date of first revision: 28th Aoril 2022 -->
 <node pkg = "arthur_perception" type="pointcloudCollector" name="pointcloudCollector" output="screen" />
 </group>
 
-<node pkg = "arthur_perception" type="registration_node_v2.py" name="registration_node_v2" output="screen"/> 
+<node pkg = "arthur_perception" type="registration_node_v4.py" name="registration_node_v4" output="screen"/> 
 
 </launch>
